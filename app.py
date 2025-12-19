@@ -3,10 +3,11 @@ import json
 import time
 import os
 import requests
+from bs4 import BeautifulSoup  # This tool helps us read the web
 
 app = Flask(__name__)
 
-# 1. Load the Internal Index
+# 1. Load Internal Index
 INDEX_FILE = "inverted_index.json"
 if os.path.exists(INDEX_FILE):
     with open(INDEX_FILE, 'r', encoding='utf-8') as f:
@@ -14,7 +15,7 @@ if os.path.exists(INDEX_FILE):
 else:
     inverted_index = {}
 
-# 2. The Dark UI
+# 2. The Dark Stealth UI
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="en">
@@ -49,7 +50,7 @@ HTML_TEMPLATE = """
         .result-card { background: rgba(35, 35, 35, 0.6); border-radius: 16px; padding: 20px; text-align: left; border-left: 4px solid var(--accent-color); margin-bottom: 15px; transition: 0.3s; }
         .web-result { border-left-color: #b000ff; }
         .result-card:hover { transform: translateY(-3px); background: rgba(45, 45, 45, 0.8); }
-        a { text-decoration: none; color: var(--accent-color); font-weight: 600; font-size: 19px; display: block; margin-bottom: 8px; }
+        a { text-decoration: none; color: var(--accent-color); font-weight: 600; font-size: 19px; display: block; margin-bottom: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         p.snippet { color: var(--text-secondary); font-size: 15px; line-height: 1.6; margin: 0; }
     </style>
 </head>
@@ -57,11 +58,11 @@ HTML_TEMPLATE = """
     <h1><span>🕷️</span> Mini-Google</h1>
     <div class="container">
         <form action="/search" method="get">
-            <input type="text" name="q" placeholder="Search the world..." required value="{{ query if query else '' }}">
+            <input type="text" name="q" placeholder="Search the real web..." required value="{{ query if query else '' }}">
             <button type="submit">Search</button>
         </form>
         {% if query %}
-            <p style="text-align: left; color: #a0a0a0; margin-bottom: 20px;">🚀 Results for "<b>{{ query }}</b>" ({{ time }} ms)</p>
+            <p style="text-align: left; color: #a0a0a0; margin-bottom: 20px;">🚀 Global Results for "<b>{{ query }}</b>" ({{ time }} ms)</p>
             <div class="results">
                 {% for res in results %}
                     <div class="result-card {{ 'web-result' if res.type == 'web' else '' }}">
@@ -70,7 +71,7 @@ HTML_TEMPLATE = """
                     </div>
                 {% endfor %}
                 {% if not results %}
-                    <p>No results found.</p>
+                    <p>No results found. (Try again, sometimes the connection times out!)</p>
                 {% endif %}
             </div>
         {% endif %}
@@ -94,36 +95,45 @@ def search():
         if query in inverted_index:
             for url in inverted_index[query]:
                 final_results.append({
-                    "title": url, 
-                    "link": url, 
-                    "desc": "Source: Internal Index Database",
-                    "type": "internal"
+                    "title": url, "link": url, 
+                    "desc": "Source: Internal Index Database", "type": "internal"
                 })
 
-        # 2. Global Web Search (Wikipedia OpenSearch)
-        # This acts like a real search engine: Titles, Links, and Descriptions
+        # 2. REAL WEB SEARCH (DuckDuckGo HTML Scraper)
         try:
-            url = f"https://en.wikipedia.org/w/api.php?action=opensearch&search={query}&limit=5&format=json"
-            # User-Agent is crucial to avoid being treated as a bot
-            headers = {'User-Agent': 'MiniGoogleProject/1.0 (Educational Portfolio)'}
-            response = requests.get(url, headers=headers, timeout=5)
+            # We use the HTML version because it is lighter and easier to scrape
+            url = "https://html.duckduckgo.com/html/"
+            payload = {'q': query}
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+            }
             
-            if response.status_code == 200:
-                data = response.json()
-                # API returns: [query, [titles], [descriptions], [links]]
-                titles = data[1]
-                descs = data[2]
-                links = data[3]
+            response = requests.post(url, data=payload, headers=headers, timeout=5)
+            soup = BeautifulSoup(response.text, 'html.parser')
+            
+            # Find results in the HTML
+            count = 0
+            for result in soup.find_all('div', class_='result'):
+                if count >= 5: break  # Limit to 5 results
                 
-                for i in range(len(titles)):
+                link_tag = result.find('a', class_='result__a')
+                snippet_tag = result.find('a', class_='result__snippet')
+                
+                if link_tag:
+                    title = link_tag.get_text()
+                    link = link_tag['href']
+                    desc = snippet_tag.get_text() if snippet_tag else "No description available."
+                    
                     final_results.append({
-                        "title": "🌐 " + titles[i],
-                        "link": links[i],
-                        "desc": descs[i] if descs[i] else "Click to view full article on the web...",
+                        "title": "🌐 " + title,
+                        "link": link,
+                        "desc": desc,
                         "type": "web"
                     })
+                    count += 1
+                    
         except Exception as e:
-            print(f"Global Search Error: {e}")
+            print(f"Web Search Error: {e}")
 
     duration = round((time.time() - start_time) * 1000, 2)
     return render_template_string(HTML_TEMPLATE, query=query, results=final_results, time=duration)
