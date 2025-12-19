@@ -15,14 +15,14 @@ if os.path.exists(INDEX_FILE):
 else:
     inverted_index = {}
 
-# 2. The Final UI (Clickable Logo)
+# 2. The "OnGo" Brand UI
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mini-Google</title>
+    <title>OnGo | Fast Search</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -69,8 +69,10 @@ HTML_TEMPLATE = """
             display: flex;
             flex-direction: column;
             align-items: center;
+            /* Optically centered (slightly above middle) */
             justify-content: {{ 'flex-start' if query else 'center' }}; 
             padding-top: {{ '40px' if query else '0' }};
+            padding-bottom: {{ '0' if query else '10vh' }};
             transition: background-color 0.3s ease, color 0.3s ease;
         }
 
@@ -97,32 +99,28 @@ HTML_TEMPLATE = """
         .theme-toggle:hover { transform: scale(1.1); }
         .theme-toggle svg { width: 20px; height: 20px; fill: currentColor; }
 
-        /* --- CLICKABLE LOGO --- */
+        /* --- BRANDING: OnGo --- */
         h1 { 
             font-family: var(--font-main);
-            font-size: 3rem; 
+            font-size: 3.5rem; 
             margin: 0 0 30px 0;
             letter-spacing: -1px;
             text-align: center;
-            font-weight: 300;
+            font-weight: 700; /* Bolder overall presence */
         }
         
-        /* The link inside the H1 */
         .logo-link {
             text-decoration: none;
-            color: var(--text-main);
+            color: var(--text-main); /* 'On' is White */
             display: inline-block;
             transition: transform 0.2s;
         }
-
-        .logo-link:hover {
-            transform: scale(1.02); /* Subtle pop effect */
-        }
+        .logo-link:hover { transform: scale(1.02); }
         
-        /* The word 'Google' inside the logo */
-        .logo-link span {
-            font-weight: 700;
-            color: var(--accent-sand);
+        /* 'Go' is Gold/Sand */
+        .logo-link span { 
+            font-weight: 700; 
+            color: var(--accent-sand); 
         }
 
         .container {
@@ -180,9 +178,7 @@ HTML_TEMPLATE = """
         }
         .clear-btn:hover { color: var(--accent-sand); }
         
-        input:not(:placeholder-shown) + .clear-btn {
-            display: block;
-        }
+        input:not(:placeholder-shown) + .clear-btn { display: block; }
 
         .search-btn { 
             background-color: var(--accent-sand);
@@ -198,10 +194,7 @@ HTML_TEMPLATE = """
             margin-left: 5px;
         }
 
-        .search-btn:hover {
-            transform: scale(1.05);
-            filter: brightness(1.1);
-        }
+        .search-btn:hover { transform: scale(1.05); filter: brightness(1.1); }
 
         .stats {
             align-self: flex-start;
@@ -246,7 +239,6 @@ HTML_TEMPLATE = """
             z-index: 10;
         }
 
-        /* Search Result Links */
         a.result-link { 
             font-family: var(--font-main);
             font-weight: 700;
@@ -300,7 +292,7 @@ HTML_TEMPLATE = """
 
     <div class="container">
         <h1>
-            <a href="/" class="logo-link">Mini<span>Google</span></a>
+            <a href="/" class="logo-link">On<span>Go</span></a>
         </h1>
         
         <form action="/search" method="get" style="width: 100%; display: flex; justify-content: center;">
@@ -352,7 +344,6 @@ HTML_TEMPLATE = """
             }
         }
 
-        // Load saved theme
         const savedTheme = localStorage.getItem('theme');
         if (savedTheme === 'light') {
             document.body.setAttribute('data-theme', 'light');
