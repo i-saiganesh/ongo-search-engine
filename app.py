@@ -15,7 +15,7 @@ if os.path.exists(INDEX_FILE):
 else:
     inverted_index = {}
 
-# 2. The "OnGo" Brand UI
+# 2. The Final "OnGo" UI (Lifted Position)
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="en">
@@ -69,10 +69,17 @@ HTML_TEMPLATE = """
             display: flex;
             flex-direction: column;
             align-items: center;
-            /* Optically centered (slightly above middle) */
+            
+            /* POSITIONING LOGIC: */
+            /* If searching: Align to top. */
+            /* If home: Center, but use padding-bottom to push it UP. */
             justify-content: {{ 'flex-start' if query else 'center' }}; 
+            
             padding-top: {{ '40px' if query else '0' }};
-            padding-bottom: {{ '0' if query else '10vh' }};
+            
+            /* CHANGED: Increased from 10vh to 25vh to lift content higher */
+            padding-bottom: {{ '0' if query else '25vh' }};
+            
             transition: background-color 0.3s ease, color 0.3s ease;
         }
 
@@ -106,18 +113,17 @@ HTML_TEMPLATE = """
             margin: 0 0 30px 0;
             letter-spacing: -1px;
             text-align: center;
-            font-weight: 700; /* Bolder overall presence */
+            font-weight: 700; 
         }
         
         .logo-link {
             text-decoration: none;
-            color: var(--text-main); /* 'On' is White */
+            color: var(--text-main);
             display: inline-block;
             transition: transform 0.2s;
         }
         .logo-link:hover { transform: scale(1.02); }
         
-        /* 'Go' is Gold/Sand */
         .logo-link span { 
             font-weight: 700; 
             color: var(--accent-sand); 
