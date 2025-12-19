@@ -15,7 +15,7 @@ if os.path.exists(INDEX_FILE):
 else:
     inverted_index = {}
 
-# 2. The "Dune / High-End" UI
+# 2. The "iOS / Dune" Modern UI
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="en">
@@ -23,24 +23,27 @@ HTML_TEMPLATE = """
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mini-Google</title>
+    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=BBH+Bartle&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=BBH+Bartle&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 
     <style>
         :root {
-            /* Your Custom Palette */
-            --bg-dark: #0D1B2A;       /* Black/Navy */
-            --bg-card: #1B263B;       /* Dark Blue */
+            /* Palette */
+            --bg-dark: #0D1B2A;       /* Deep Navy */
+            --bg-card: rgba(27, 38, 59, 0.7); /* Glassy Blue */
             --text-main: #E0E1DD;     /* Bone White */
-            --accent-sand: #B3AF8F;   /* Sand/Gold */
+            --accent-sand: #B3AF8F;   /* Gold/Sand */
             --accent-blue: #415A77;   /* Muted Blue */
             
-            --font-display: 'BBH Bartle', serif; /* The Crazy Font */
-            --font-body: 'Inter', sans-serif;    /* Readable Font */
+            /* Fonts */
+            --font-display: 'BBH Bartle', serif; 
+            --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; /* iOS System stack */
         }
         
+        * { box-sizing: border-box; }
+
         body { 
             background-color: var(--bg-dark);
             color: var(--text-main);
@@ -50,19 +53,22 @@ HTML_TEMPLATE = """
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center; /* Center vertically like the login page */
+            justify-content: center;
+            padding: 20px;
         }
 
-        /* The Logo - Using the Crazy Font */
+        /* 1. Responsive Heading (Fits properly on any screen) */
         h1 { 
             font-family: var(--font-display);
-            font-size: 5rem; 
+            /* clamp(min, preferred, max) -> scales smoothly */
+            font-size: clamp(3rem, 12vw, 6rem); 
             margin: 0 0 40px 0;
-            letter-spacing: -2px;
+            letter-spacing: -0.03em;
             text-transform: uppercase;
             color: var(--text-main);
             text-align: center;
-            line-height: 0.9;
+            line-height: 1;
+            width: 100%;
         }
         
         h1 span {
@@ -70,122 +76,133 @@ HTML_TEMPLATE = """
         }
 
         .container {
-            width: 90%;
-            max-width: 800px;
+            width: 100%;
+            max-width: 700px; /* Optimal reading width */
             text-align: center;
         }
 
-        /* The Search Box Area */
+        /* 2. iPhone-style Rounded Search Bar */
         .search-wrapper {
-            background: var(--bg-card);
-            padding: 10px;
-            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            padding: 8px;
+            border-radius: 50px; /* Fully rounded pill shape */
             display: flex;
+            align-items: center;
             gap: 10px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-            border: 1px solid var(--accent-blue);
-            transition: transform 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
         }
 
         .search-wrapper:focus-within {
-            transform: scale(1.02);
+            background: rgba(255, 255, 255, 0.1);
             border-color: var(--accent-sand);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+            transform: scale(1.01);
         }
 
         input { 
             background: transparent;
             border: none;
             color: var(--text-main);
-            font-size: 1.2rem;
-            padding: 15px 20px;
+            font-size: 1.1rem;
+            padding: 12px 20px;
             width: 100%;
             font-family: var(--font-body);
+            font-weight: 400;
             outline: none;
         }
 
         input::placeholder {
             color: var(--accent-blue);
-            opacity: 0.7;
+            font-weight: 300;
         }
 
+        /* Round Button */
         button { 
             background-color: var(--accent-sand);
             color: var(--bg-dark);
             border: none;
-            border-radius: 8px;
-            padding: 0 30px;
+            border-radius: 40px;
+            padding: 12px 30px;
             font-family: var(--font-display);
-            font-size: 1.2rem;
+            font-size: 1rem;
             text-transform: uppercase;
+            letter-spacing: 0.5px;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: transform 0.2s;
+            flex-shrink: 0; /* Prevents button from shrinking on small phones */
         }
 
         button:hover {
-            background-color: var(--text-main);
-            transform: translateY(-2px);
+            transform: scale(1.05);
+            background-color: #E0E1DD;
         }
 
-        /* Results Area */
+        /* 3. iPhone-style Results Cards */
         .stats {
-            margin-top: 20px;
+            margin: 20px 0 10px;
             color: var(--accent-blue);
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             text-align: left;
-            padding-left: 10px;
+            padding-left: 15px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         .results {
-            margin-top: 30px;
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 16px;
             text-align: left;
+            padding-bottom: 40px;
         }
 
         .result-card {
             background: var(--bg-card);
-            padding: 25px;
-            border-radius: 4px; /* Sharper edges for modern look */
-            border-left: 4px solid var(--accent-blue);
-            transition: all 0.2s ease;
+            backdrop-filter: blur(12px); /* Glass effect */
+            -webkit-backdrop-filter: blur(12px);
+            padding: 24px;
+            border-radius: 28px; /* High curvature (Apple style) */
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: transform 0.2s ease, background 0.2s;
         }
         
         .web-result {
-            border-left-color: var(--accent-sand);
+            /* Subtle distinction for web results */
+            background: rgba(65, 90, 119, 0.15); 
         }
 
         .result-card:hover {
-            transform: translateX(10px);
-            background: #23314A; /* Slightly lighter on hover */
+            transform: scale(1.02);
+            background: rgba(255, 255, 255, 0.08);
         }
 
         a { 
             font-family: var(--font-display);
-            font-size: 1.5rem;
+            font-size: 1.4rem;
             color: var(--text-main);
             text-decoration: none;
             display: block;
             margin-bottom: 8px;
-            letter-spacing: -0.5px;
+            line-height: 1.1;
         }
         
         a:hover {
-            text-decoration: underline;
-            text-decoration-color: var(--accent-sand);
+            color: var(--accent-sand);
         }
 
         p.snippet {
-            color: #AAB3C0; /* Muted grey/blue */
-            line-height: 1.6;
-            font-size: 1rem;
+            color: #AAB3C0; 
+            line-height: 1.5;
+            font-size: 0.95rem;
+            font-weight: 300;
             margin: 0;
+            opacity: 0.9;
         }
-        
-        /* Scrollbar styling */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: var(--bg-dark); }
-        ::-webkit-scrollbar-thumb { background: var(--accent-blue); border-radius: 4px; }
     </style>
 </head>
 <body>
@@ -194,13 +211,13 @@ HTML_TEMPLATE = """
         
         <form action="/search" method="get">
             <div class="search-wrapper">
-                <input type="text" name="q" placeholder="Type to search..." required value="{{ query if query else '' }}">
-                <button type="submit">GO</button>
+                <input type="text" name="q" placeholder="Search the web..." required value="{{ query if query else '' }}">
+                <button type="submit">Search</button>
             </div>
         </form>
         
         {% if query %}
-            <p class="stats">:: Found results for "<b>{{ query }}</b>" in {{ time }} ms</p>
+            <p class="stats">Result for "<b>{{ query }}</b>" ({{ time }} ms)</p>
             
             <div class="results">
                 {% for res in results %}
@@ -211,7 +228,9 @@ HTML_TEMPLATE = """
                 {% endfor %}
                 
                 {% if not results %}
-                    <p style="color: var(--accent-blue)">:: System returned 0 results.</p>
+                    <div class="result-card">
+                        <p class="snippet" style="text-align: center;">No results found. Try a different term.</p>
+                    </div>
                 {% endif %}
             </div>
         {% endif %}
@@ -236,7 +255,7 @@ def search():
             for url in inverted_index[query]:
                 final_results.append({
                     "title": url, "link": url, 
-                    "desc": ":: Internal Index Match", "type": "internal"
+                    "desc": ":: Internal Database Match", "type": "internal"
                 })
 
         # 2. Web Search (Scraper)
@@ -256,7 +275,7 @@ def search():
                     final_results.append({
                         "title": link_tag.get_text(),
                         "link": link_tag['href'],
-                        "desc": snippet_tag.get_text() if snippet_tag else "No data available.",
+                        "desc": snippet_tag.get_text() if snippet_tag else "Click to read more...",
                         "type": "web"
                     })
                     count += 1
