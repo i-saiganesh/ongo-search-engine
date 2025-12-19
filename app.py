@@ -2,11 +2,11 @@ from flask import Flask, request, render_template_string
 import json
 import time
 import os
-import requests
+from duckduckgo_search import DDGS  # The tool for Real Search
 
 app = Flask(__name__)
 
-# 1. Load the Index
+# 1. Load the Internal Index (Fast Local Results)
 INDEX_FILE = "inverted_index.json"
 print("🚀 Loading Index...")
 if os.path.exists(INDEX_FILE):
@@ -15,7 +15,7 @@ if os.path.exists(INDEX_FILE):
 else:
     inverted_index = {}
 
-# 2. The New "Stealth Mode" Dark UI
+# 2. The "Stealth Mode" Dark UI
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="en">
@@ -24,7 +24,6 @@ HTML_TEMPLATE = """
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mini-Google | Stealth</title>
     <style>
-        /* Import a Premium, Modern Font */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
 
         :root {
@@ -32,9 +31,8 @@ HTML_TEMPLATE = """
             --card-bg: rgba(25, 25, 25, 0.85);
             --text-primary: #ffffff;
             --text-secondary: #a0a0a0;
-            --accent-color: #00f2ff; /* Electric Blue */
+            --accent-color: #00f2ff;
             --accent-gradient: linear-gradient(135deg, #00c6ff, #0072ff);
-            --wiki-accent: #ff9f43; /* Orange for Wiki */
         }
         
         body { 
@@ -141,8 +139,9 @@ HTML_TEMPLATE = """
             transition: all 0.3s ease;
         }
 
-        .wiki-card {
-            border-left-color: var(--wiki-accent);
+        /* Distinct Style for Real Web Results */
+        .web-result {
+            border-left-color: #b000ff; /* Purple for Web Results */
         }
 
         .result-card:hover {
@@ -167,9 +166,11 @@ HTML_TEMPLATE = """
             font-size: 15px; 
             line-height: 1.6; 
             margin: 0;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
         }
-
-        .no-results { color: var(--text-secondary); font-size: 17px; margin-top: 30px; }
 
         @keyframes fadeInUp {
             from { opacity: 0; transform: translateY(30px); }
@@ -181,7 +182,7 @@ HTML_TEMPLATE = """
     <h1><span>🕷️</span> Mini-Google</h1>
     <div class="container">
         <form action="/search" method="get">
-            <input type="text" name="q" placeholder="Search anything..." required value="{{ query if query else '' }}">
+            <input type="text" name="q" placeholder="Search the real web..." required value="{{ query if query else '' }}">
             <button type="submit">Search</button>
         </form>
         
@@ -192,19 +193,19 @@ HTML_TEMPLATE = """
                 {% for url in db_results %}
                     <div class="result-card">
                         <a href="{{ url }}" target="_blank">{{ url }}</a>
-                        <p class="snippet">Source: Internal Index Database</p>
+                        <p class="snippet">Source: Internal Index Database (Fast Match)</p>
                     </div>
                 {% endfor %}
 
-                {% if wiki_title %}
-                    <div class="result-card wiki-card">
-                        <a href="{{ wiki_url }}" target="_blank">📖 {{ wiki_title }}</a>
-                        <p class="snippet">{{ wiki_summary }}</p>
+                {% for res in web_results %}
+                    <div class="result-card web-result">
+                        <a href="{{ res.href }}" target="_blank">🌐 {{ res.title }}</a>
+                        <p class="snippet">{{ res.body }}</p>
                     </div>
-                {% endif %}
+                {% endfor %}
 
-                {% if not db_results and not wiki_title %}
-                    <p class="no-results">No results found locally or on Wikipedia. Try a different term.</p>
+                {% if not db_results and not web_results %}
+                    <p class="no-results">No results found. The internet seems quiet today.</p>
                 {% endif %}
             </div>
         {% endif %}
@@ -220,31 +221,26 @@ def home():
 @app.route('/search')
 def search():
     query = request.args.get('q', '').lower().strip()
-    # We don't return early here anymore, so the UI still loads even without a query
-    
     start_time = time.time()
+    
     db_results = []
-    wiki_title = None
-    wiki_summary = None
-    wiki_url = None
+    web_results = []
     duration = 0
 
     if query:
         # 1. Search Local Database
         db_results = inverted_index.get(query, [])
         
-        # 2. Search Wikipedia if needed
-        if len(db_results) < 3:
+        # 2. Search Real Web (DuckDuckGo)
+        # We fetch top 5 results if local DB has fewer than 2 results
+        if len(db_results) < 2:
             try:
-                response = requests.get(f"https://en.wikipedia.org/api/rest_v1/page/summary/{query}", timeout=2)
-                if response.status_code == 200:
-                    data = response.json()
-                    if "extract" in data and data.get("type") == "standard":
-                        wiki_title = data['title']
-                        wiki_summary = data['extract']
-                        wiki_url = data['content_urls']['desktop']['page']
+                with DDGS() as ddgs:
+                    # Fetch 5 web results
+                    results = list(ddgs.text(query, max_results=5))
+                    web_results = results
             except Exception as e:
-                print(f"Wiki Error: {e}")
+                print(f"Search Error: {e}")
 
         duration = round((time.time() - start_time) * 1000, 2)
     
@@ -252,9 +248,7 @@ def search():
         HTML_TEMPLATE, 
         query=query, 
         db_results=db_results, 
-        wiki_title=wiki_title,
-        wiki_summary=wiki_summary,
-        wiki_url=wiki_url,
+        web_results=web_results,
         time=duration
     )
 
