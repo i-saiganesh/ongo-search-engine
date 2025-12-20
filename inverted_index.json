@@ -5,5 +5,6 @@
     "flask": ["https://flask.palletsprojects.com/", "https://blog.miguelgrinberg.com/"],
     "algorithm": ["https://en.wikipedia.org/wiki/Algorithm", "https://visualgo.net/en"],
     "ganesh": ["https://github.com/i-saiganesh", "https://www.linkedin.com/in/ganesh"],
-    "ongo": ["https://github.com/i-saiganesh/ongo-search-engine"]
+    "ongo": ["https://github.com/i-saiganesh/ongo-search-engine"],
+    "google": ["https://www.google.com/", "https://about.google/"]
 }
