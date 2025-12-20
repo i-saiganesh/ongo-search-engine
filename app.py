@@ -4,7 +4,7 @@ import time
 import os
 import requests
 from bs4 import BeautifulSoup
-import traceback # Added for debugging
+import traceback
 
 app = Flask(__name__)
 
@@ -16,7 +16,7 @@ if os.path.exists(INDEX_FILE):
 else:
     inverted_index = {}
 
-# 2. UI Template (Same as before)
+# 2. UI Template (Updated 'source' to 'src' to avoid conflict)
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="en">
@@ -64,7 +64,7 @@ HTML_TEMPLATE = """
             </div>
         </form>
         {% if query %}
-            <p class="stats">Found results for "<b>{{ query }}</b>" ({{ time }} ms) via {{ source }}</p>
+            <p class="stats">Found results for "<b>{{ query }}</b>" ({{ time }} ms) via {{ src }}</p>
             <div class="results">
                 {% for res in results %}
                     <div class="result-card {{ 'web-result' if res.type == 'web' else ('wiki-result' if res.type == 'wiki' else 'internal-result') }}">
@@ -98,11 +98,11 @@ def home():
 
 @app.route('/search')
 def search():
-    # --- DEBUG MODE: Catch ALL Errors and show them ---
     try:
         query = request.args.get('q', '').lower().strip()
         start_time = time.time()
         final_results = []
+        # Logic variable stays 'source'
         source = "Internal DB"
         web_results = []
 
@@ -177,13 +177,14 @@ def search():
                 final_results.extend(web_results)
 
         duration = round((time.time() - start_time) * 1000, 2)
-        return render_template_string(HTML_TEMPLATE, query=query, results=final_results, time=duration, source=source)
+        
+        # --- THE FIX IS HERE ---
+        # Changed 'source=source' to 'src=source' to prevent argument collision
+        return render_template_string(HTML_TEMPLATE, query=query, results=final_results, time=duration, src=source)
 
     except Exception as e:
-        # !!! THIS IS THE FIX !!!
-        # If anything crashes, it will print the ERROR to your screen instead of "500 Internal Server Error"
         error_msg = traceback.format_exc()
-        return f"<h1>CRITICAL ERROR (Show this to your developer):</h1><pre>{error_msg}</pre>"
+        return f"<h1>CRITICAL ERROR:</h1><pre>{error_msg}</pre>"
 
 if __name__ == '__main__':
     app.run(debug=True)
