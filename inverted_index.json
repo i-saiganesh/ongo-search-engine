@@ -1,23 +1,9 @@
 {
-    "python": [
-        "https://www.python.org/",
-        "https://en.wikipedia.org/wiki/Python_(programming_language)",
-        "https://www.w3schools.com/python/"
-    ],
-    "java": [
-        "https://www.java.com/en/",
-        "https://en.wikipedia.org/wiki/Java_(programming_language)"
-    ],
-    "search": [
-        "https://www.google.com/",
-        "https://en.wikipedia.org/wiki/Search_engine"
-    ],
-    "code": [
-        "https://github.com/",
-        "https://stackoverflow.com/"
-    ],
-    "data": [
-        "https://en.wikipedia.org/wiki/Data",
-        "https://www.kaggle.com/"
-    ]
+    "python": ["https://www.python.org/", "https://realpython.com/", "https://docs.python.org/3/"],
+    "dsa": ["https://www.geeksforgeeks.org/data-structures/", "https://leetcode.com/problemset/all/"],
+    "search": ["https://en.wikipedia.org/wiki/Search_engine", "https://www.google.com/"],
+    "flask": ["https://flask.palletsprojects.com/", "https://blog.miguelgrinberg.com/"],
+    "algorithm": ["https://en.wikipedia.org/wiki/Algorithm", "https://visualgo.net/en"],
+    "ganesh": ["https://github.com/i-saiganesh", "https://www.linkedin.com/in/ganesh"],
+    "ongo": ["https://github.com/i-saiganesh/ongo-search-engine"]
 }
